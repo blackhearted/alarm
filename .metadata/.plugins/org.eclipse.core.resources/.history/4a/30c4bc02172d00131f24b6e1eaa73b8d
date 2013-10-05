@@ -1,0 +1,5 @@
+package com.example.alarm;
+
+public final class Alarm {
+
+}

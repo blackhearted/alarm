@@ -1,0 +1,279 @@
+/*
+ * Copyright (C) 2007 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.example.alarm;
+
+//import com.example.android.notepad.NotePad;
+
+import android.content.ClipDescription;
+import android.content.ContentProvider;
+import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.UriMatcher;
+import android.content.ContentProvider.PipeDataWriter;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.Resources;
+import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
+import android.provider.LiveFolders;
+import android.text.TextUtils;
+import android.util.Log;
+
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+
+public class AlarmDataProvider extends ContentProvider implements
+		PipeDataWriter<Cursor> {
+
+	/**
+	 * The database that the provider uses as its underlying data store
+	 */
+	private static final String DATABASE_NAME = "alarm_db.db";
+
+	/**
+	 * The database version
+	 */
+	private static final int DATABASE_VERSION = 2;
+
+	private static final String TABLE_NAME = "ALARMS";
+
+	// Handle to a new DatabaseHelper.
+	private DatabaseHelper mOpenHelper;
+
+	/**
+	 * 
+	 * This class helps open, create, and upgrade the database file. Set to
+	 * package visibility for testing purposes.
+	 */
+	static class DatabaseHelper extends SQLiteOpenHelper {
+
+		DatabaseHelper(Context context) {
+
+			// calls the super constructor, requesting the default cursor
+			// factory.
+			super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		}
+
+		/**
+		 * 
+		 * Creates the underlying database with table name and column names
+		 * taken from the NotePad class.
+		 */
+		@Override
+		public void onCreate(SQLiteDatabase db) {
+			db.execSQL("CREATE TABLE " + TABLE_NAME 
+					+ " (" 
+					+ "ID"	+ " INTEGER PRIMARY KEY," 
+					+ "TIME" + " DATETIME,"
+					+ "COORDS"	+ " TEXT," 
+					+ ");"
+					);
+		}
+
+		/**
+		 * 
+		 * Demonstrates that the provider must consider what happens when the
+		 * underlying datastore is changed. In this sample, the database is
+		 * upgraded the database by destroying the existing data. A real
+		 * application should upgrade the database in place.
+		 */
+		@Override
+		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+			// Kills the table and existing data
+			db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+
+			// Recreates the database with a new version
+			onCreate(db);
+		}
+	}
+
+	private static HashMap<String, String> sProjectionMap;
+	static {
+		sProjectionMap = new HashMap<String, String>();
+		sProjectionMap.put("ID", "ID");
+		sProjectionMap.put("TIME", "TIME");
+		sProjectionMap.put("COORDS", "COORDS");
+	}
+
+	/**
+	 * 
+	 * Initializes the provider by creating a new DatabaseHelper. onCreate() is
+	 * called automatically when Android creates the provider in response to a
+	 * resolver request from a client.
+	 */
+	@Override
+	public boolean onCreate() {
+
+		// Creates a new helper object. Note that the database itself isn't
+		// opened until
+		// something tries to access it, and it's only created if it doesn't
+		// already exist.
+		mOpenHelper = new DatabaseHelper(getContext());
+
+		// Assumes that any failures will be reported by a thrown exception.
+		return true;
+	}
+	
+	@Override
+	public Cursor query(Uri uri, String[] projection, String selection,
+			String[] selectionArgs, String sortOrder) {
+
+		// Constructs a new query builder and sets its table name
+		SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+		qb.setTables(TABLE_NAME);
+		qb.setProjectionMap(sProjectionMap);
+		// Opens the database object in "read" mode, since no writes need to be
+		// done.
+		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+		/*
+		 * Performs the query. If no problems occur trying to read the database,
+		 * then a Cursor object is returned; otherwise, the cursor variable
+		 * contains null. If no records were selected, then the Cursor object is
+		 * empty, and Cursor.getCount() returns 0.
+		 */
+		Cursor c = qb.query(db, // The database to query
+				projection, // The columns to return from the query
+				selection, // The columns for the where clause
+				selectionArgs, // The values for the where clause
+				null, // don't group the rows
+				null, // don't filter by row groups
+				"modified DESC" // The sort order
+				);
+
+		// Tells the Cursor what URI to watch, so it knows when its source data
+		// changes
+		c.setNotificationUri(getContext().getContentResolver(), uri);
+		return c;
+	}
+
+	/**
+	 * This is called when a client calls
+	 * {@link android.content.ContentResolver#getType(Uri)}. Returns the MIME
+	 * data type of the URI given as a parameter.
+	 * 
+	 * @param uri
+	 *            The URI whose MIME type is desired.
+	 * @return The MIME type of the URI.
+	 * @throws IllegalArgumentException
+	 *             if the incoming URI pattern is invalid.
+	 */
+	@Override
+	public String getType(Uri uri) {
+		return "";
+	}
+
+	/**
+	 * This describes the MIME types that are supported for opening a note URI
+	 * as a stream.
+	 */
+	static ClipDescription NOTE_STREAM_TYPES = new ClipDescription(null,
+			new String[] { ClipDescription.MIMETYPE_TEXT_PLAIN });
+
+	/**
+	 * Returns the types of available data streams. URIs to specific notes are
+	 * supported. The application can convert such a note to a plain text
+	 * stream.
+	 * 
+	 * @param uri
+	 *            the URI to analyze
+	 * @param mimeTypeFilter
+	 *            The MIME type to check for. This method only returns a data
+	 *            stream type for MIME types that match the filter. Currently,
+	 *            only text/plain MIME types match.
+	 * @return a data stream MIME type. Currently, only text/plan is returned.
+	 * @throws IllegalArgumentException
+	 *             if the URI pattern doesn't match any supported patterns.
+	 */
+	@Override
+	public String[] getStreamTypes(Uri uri, String mimeTypeFilter) {
+			return null;		
+	}
+		
+	@Override
+	public Uri insert(Uri uri, ContentValues initialValues) {
+
+		// A map to hold the new record's values.
+		ContentValues values;
+
+		// If the incoming values map is not null, uses it for the new values.
+		if (initialValues != null) {
+			values = new ContentValues(initialValues);
+
+		} else {
+			// Otherwise, create a new value map
+			values = new ContentValues();
+		}
+
+		// If the values map doesn't contain the creation date, sets the value
+		// to the current time.
+		if (values.containsKey("TIME") == false) {
+			throw new IllegalArgumentException("TIME is not set");
+		}
+
+		// If the values map doesn't contain the modification date, sets the
+		// value to the current
+		// time.
+		if (values.containsKey("COORDS") == false) {
+			throw new IllegalArgumentException("COORDS is not set");
+		}
+
+		// Opens the database object in "write" mode.
+		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+
+		// Performs the insert and returns the ID of the new note.
+		long rowId = db.insert(TABLE_NAME, // The table to insert
+														// into.
+				"TIME", // A hack, SQLite sets this
+												// column value to null
+												// if values is empty.
+				values // A map of column names, and the values to insert
+						// into the columns.
+				);
+
+		// If the insert succeeded, the row ID exists.
+		if (rowId > 0) {
+			return uri;
+		}
+
+		// If the insert didn't succeed, then the rowID is <= 0. Throws an
+		// exception.
+		throw new SQLException("Failed to insert row into " + uri);
+	}
+
+	@Override
+	public int delete(Uri uri, String where, String[] whereArgs) {
+			throw new UnsupportedOperationException("Delete is not implemented");		
+	}
+
+	@Override
+	public int update(Uri uri, ContentValues values, String where,
+			String[] whereArgs) {
+		throw new UnsupportedOperationException("Update is not implemented");
+	}
+}

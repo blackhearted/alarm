@@ -1,0 +1,9 @@
+1380898927065	Rename type 'NotePadProvider'
+1380899201163	Rename type 'NotePad'
+1380899227070	Rename type 'Notes'
+1380899245725	Rename type 'AlarmInstance'
+1380899622691	Delete element
+1380906367353	Move member 'TABLE_NAME_ALARMS'
+1380906390639	Move member 'TABLE_NAME_COORDS'
+1380906930555	Rename field 'sProjectionMap'
+1380908278402	Extract local variable 'managedQuery'

@@ -1,0 +1,19 @@
+package com.example.alarm;
+
+import android.net.Uri;
+import android.provider.BaseColumns;
+
+/**
+ * Defines a contract between the Note Pad content provider and its clients. A contract defines the
+ * information that a client needs to access the provider as one or more data tables. A contract
+ * is a public, non-extendable (final) class that contains constants defining column names and
+ * URIs. A well-written client depends only on the constants in the contract.
+ */
+public final class Alarm {
+    public static final String AUTHORITY = "com.example.alarm.Alarm";
+	static final String TABLE_NAME_ALARMS = "ALARMS";
+
+    // This class cannot be instantiated
+    private Alarm() {
+    }
+}

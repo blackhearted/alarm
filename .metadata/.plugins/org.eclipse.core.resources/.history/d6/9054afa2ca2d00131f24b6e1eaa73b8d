@@ -1,0 +1,31 @@
+package com.example.alarm.test;
+
+import junit.framework.TestCase;
+
+public class DataProviderTest extends TestCase {
+
+	protected void setUp() throws Exception {
+		super.setUp();
+	}
+
+	protected void tearDown() throws Exception {
+		super.tearDown();
+	}
+
+	public void testQueryUriStringArrayStringStringArrayString() {
+		fail("Not yet implemented");
+	}
+
+	public void testInsertUriContentValues() {
+		fail("Not yet implemented");
+	}
+
+	public void testDeleteUriStringStringArray() {
+		fail("Not yet implemented");
+	}
+
+	public void testUpdateUriContentValuesStringStringArray() {
+		fail("Not yet implemented");
+	}
+
+}

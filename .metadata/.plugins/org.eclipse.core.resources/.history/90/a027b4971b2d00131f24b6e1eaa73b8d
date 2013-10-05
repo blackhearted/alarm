@@ -1,0 +1,57 @@
+package com.example.alarm;
+
+import java.sql.Date;
+import java.text.SimpleDateFormat;
+
+import android.net.Uri;
+import android.os.Bundle;
+import android.app.Activity;
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.view.Menu;
+import android.view.View;
+
+public class MainActivity extends Activity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.mainmenu, menu);
+		return true;
+	}
+	
+    private static final String[] PROJECTION =
+            new String[] {
+                Alarm.ID,
+                Alarm.TIME,
+                NotePad.Notes.COLUMN_NAME_NOTE
+        };
+
+	
+	public void Alarm.COORDS(View view) 
+	{
+		
+		ContentValues values = new ContentValues();
+		values.put(Alarm.ID, 1);
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
+		Date date = new Date(0);
+		values.put(Alarm.TIME, dateFormat.format(date) );
+		values.put(Alarm.COORDS, "NA");
+		Uri uri = getContentResolver().insert(Alarm.TIMES_URI, values);
+		
+		Cursor mCursor = managedQuery(
+				uri,         // The URI that gets multiple notes from the provider.
+	            PROJECTION,   // A projection that returns the note ID and note content for each note.
+	            null,         // No "where" clause selection criteria.
+	            null,         // No "where" clause selection values.
+	            null          // Use the default sort order (modification date, descending)
+	        );
+	}
+
+}
