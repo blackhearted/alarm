@@ -77,7 +77,7 @@ public class AlarmDataProvider extends ContentProvider {
 					+ " (" 
 					+ "ID"	+ " INTEGER PRIMARY KEY," 
 					+ "TIME" + " DATETIME,"
-					+ "COORDS"	+ " INTEGER" 
+					+ "COORDS"	+ " INTEGER" // FK to COORDS
 					+ ");"
 					);
 			
@@ -264,6 +264,8 @@ public class AlarmDataProvider extends ContentProvider {
 			if (tableName.isEmpty())
 				tableName = Alarm.TABLE_NAME_COORDS;
 			break;
+		default:
+            throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 
 		// Opens the database object in "write" mode.
