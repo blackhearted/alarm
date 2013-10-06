@@ -183,7 +183,7 @@ public class AlarmDataProvider extends ContentProvider {
 				selectionArgs, // The values for the where clause
 				null, // don't group the rows
 				null, // don't filter by row groups
-				"modified DESC" // The sort order
+				"ID DESC" // The sort order
 				);
 
 		// Tells the Cursor what URI to watch, so it knows when its source data

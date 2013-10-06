@@ -32,25 +32,4 @@ public class MainActivity extends Activity {
                 Alarm.TIME,
                 Alarm.COORDS
         };
-
-	
-	public void onDummyClick(View view) 
-	{		
-		ContentValues values = new ContentValues();
-		values.put(Alarm.ID, 1);
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); 
-		Date date = new Date(0);
-		values.put(Alarm.TIME, dateFormat.format(date) );
-		values.put(Alarm.COORDS, "NA");
-		Uri uri = getContentResolver().insert(Alarm.TIMES_URI, values);
-		
-		Cursor managedQuery = managedQuery(
-				uri,         // The URI that gets multiple notes from the provider.
-	            PROJECTION,   // A projection that returns data.
-	            null,         // No "where" clause selection criteria.
-	            null,         // No "where" clause selection values.
-	            null          // Use the default sort order (modification date, descending)
-	        );
-	}
-
 }
